@@ -1,8 +1,9 @@
 //======================================================================
 //
 // rosc.v
-// ---------
-// Digital ring oscillator used as entropy source.
+// ------
+// Digital ring oscillator used as entropy source. Based on the
+// idea of using carry chain in adders as inverter by Bernd Paysan.
 //
 //
 // Author: Joachim Strombergson
@@ -36,47 +37,70 @@
 //
 //======================================================================
 
-module rosc(
-            input wire clk,
-            input wire we,
-            input wire reset_n,
+module rosc #(parameter WIDTH = 2)
+             (
+              input wire                   clk,
+              input wire                   reset_n,
 
-            input [(WIDTH - 1) : 0] op_a,
-            input [(WIDTH - 1) : 0] op_b,
-            output wire             d
-           );
+              input wire                   we,
 
-  //----------------------------------------------------------------
-  // Internal constant and parameter definitions.
-  //----------------------------------------------------------------
-  parameter l=2;
+              input wire [(WIDTH - 1) : 0] opa,
+              input wire [(WIDTH - 1) : 0] opb,
+
+              output wire                  dout
+             );
 
   //----------------------------------------------------------------
+  // Registers.
   //----------------------------------------------------------------
-   wire 	 cin;
-   wire [l:0]  sum = in1 + in2 + cin;
+  reg dout_reg;
 
 
   //----------------------------------------------------------------
+  // Wires.
   //----------------------------------------------------------------
-   assign cin = ~sum[l];
+  reg [WIDTH : 0] sum;
+  reg 	          cin;
 
 
   //----------------------------------------------------------------
+  // Concurrent assignment.
   //----------------------------------------------------------------
-   always @(posedge clk or negedge reset_n)
-     if(!nreset)
+  assign dout = dout_reg;
+
+
+  //----------------------------------------------------------------
+  // reg_update
+  //----------------------------------------------------------------
+     always @ (posedge clk or negedge reset_n)
        begin
-         d <= 0;
-       end
-     else
-       begin
-         if (we)
+         if (!reset_n)
            begin
-             d <= sum[l];
+             dout_reg <= 1'b0;
+           end
+         else
+           begin
+             if (we)
+               begin
+                 dout_reg <= cin;
+               end
            end
        end
 
+
+  //----------------------------------------------------------------
+  // adder_osc
+  //
+  // Adder logic that generates the oscillator.
+  //
+  // NOTE: This logic contains a combinational loop and does
+  // not play well with an event driven simulator.
+  //----------------------------------------------------------------
+  always @*
+    begin: adder_osc
+      cin = ~sum[WIDTH];
+      sum = opa + opb + cin;
+    end
 endmodule // rosc
 
 //======================================================================
