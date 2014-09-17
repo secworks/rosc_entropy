@@ -82,12 +82,14 @@ module rosc_entropy_core(
 
   //----------------------------------------------------------------
   // module instantiations.
-  // 32 2-bit wide oscillators.
+  //
+  // 32 1-bit wide oscillators. We want them to run as fast as
+  // possible to maximize differences over time.
   //----------------------------------------------------------------
   genvar i;
   generate
     for(i = 0 ; i < 32 ; i = i + 1) begin: oscillators
-      rosc #(.WIDTH(2)) osc01(.clk(clk),
+      rosc #(.WIDTH(1)) osc01(.clk(clk),
                                 .reset_n(reset_n),
                                 .opa(opa[0]),
                                 .opb(opb[0]),
@@ -95,6 +97,7 @@ module rosc_entropy_core(
                                );
     end
   endgenerate
+
 
   //----------------------------------------------------------------
   // reg_update
