@@ -58,12 +58,16 @@ module rosc_entropy_core(
   reg          shift_we;
   reg [31 : 0] rnd_reg;
   reg [4 : 0]  bit_ctr_reg;
+  reg [7 : 0]  sample_ctr_reg;
+  reg [7 : 0]  sample_ctr_new;
 
 
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
   reg          bit_new;
+
+  reg          rosc_we;
 
   wire [7 : 0] dout01;
   wire [7 : 0] dout02;
@@ -78,33 +82,19 @@ module rosc_entropy_core(
 
   //----------------------------------------------------------------
   // module instantiations.
+  // 32 2-bit wide oscillators.
   //----------------------------------------------------------------
   genvar i;
   generate
-    for(i = 0 ; i < 8 ; i = i + 1) begin: oscillators
-      bp_osc #(.WIDTH(1)) osc01(.clk(clk),
+    for(i = 0 ; i < 32 ; i = i + 1) begin: oscillators
+      rosc #(.WIDTH(2)) osc01(.clk(clk),
                                 .reset_n(reset_n),
                                 .opa(opa[0]),
                                 .opb(opb[0]),
                                 .dout(dout01[i])
                                );
-
-      bp_osc #(.WIDTH(2)) osc02(.clk(clk),
-                                .reset_n(reset_n),
-                                .opa(opa[1 : 0]),
-                                .opb(opb[1 : 0]),
-                                .dout(dout02[i])
-                               );
-
-      bp_osc #(.WIDTH(3)) osc03(.clk(clk),
-                                .reset_n(reset_n),
-                                .opa(opa[2 : 0]),
-                                .opb(opb[2 : 0]),
-                                .dout(dout03[i])
-                               );
     end
   endgenerate
-
 
   //----------------------------------------------------------------
   // reg_update
@@ -117,12 +107,15 @@ module rosc_entropy_core(
     begin
       if (!reset_n)
         begin
-          shift_reg   <= 32'h00000000;
-          rnd_reg     <= 32'h00000000;
-          bit_ctr_reg <= 5'h00;
+          shift_reg      <= 32'h00000000;
+          rnd_reg        <= 32'h00000000;
+          bit_ctr_reg    <= 5'h00;
+          sample_ctr_reg <= 8'h00;
         end
       else
         begin
+          sample_ctr_reg <= sample_ctr_new;
+
           if (update)
             begin
               shift_reg   <= {shift_reg[30 : 0], bit_new};
@@ -147,13 +140,15 @@ module rosc_entropy_core(
     begin : rnd_gen
       reg osc1_mix;
       reg osc2_mix;
-      reg osc3_mix;
 
-      osc1_mix = ^dout01;
-      osc2_mix = ^dout02;
-      osc3_mix = ^dout03;
+      rosc_we = 0;
+      sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      bit_new = osc1_mix ^ osc2_mix ^ osc3_mix;
+      if (sample_ctr_reg == 8'hff)
+        begin
+          bit_new = ^dout01;
+          rosc_we = 1;
+        end
     end
 endmodule // rosc_entropy_core
 
