@@ -37,7 +37,6 @@
 //======================================================================
 
 module rosc_entropy_core(
-                         // Clock and reset.
                          input wire           clk,
                          input wire           reset_n,
 
@@ -56,7 +55,7 @@ module rosc_entropy_core(
 
 
   //----------------------------------------------------------------
-  // Parameters
+  // Parameters.
   //----------------------------------------------------------------
   parameter NUM_SHIFT_BITS    = 8'20;
   parameter SAMPLE_CLK_CYCLES = 8'hff;
