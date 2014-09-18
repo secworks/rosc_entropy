@@ -43,8 +43,6 @@ module rosc_entropy(
                     output wire [7 : 0]  debug,
                     input wire           debug_update,
 
-                    output [31 : 0]      entropy,
-
                     input wire           cs,
                     input wire           we,
                     input wire  [7 : 0]  address,
@@ -57,16 +55,17 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  parameter ADDR_CTRL            = 8'h10;
+  parameter ADDR_CTRL            = 8'h00;
   parameter CTRL_ENABLE_BIT      = 0;
 
   parameter ADDR_STATUS          = 8'h01;
-  parameter STATUS_RND_VALUD_BIT = 0;
+  parameter STATUS_RND_VALID_BIT = 0;
 
   parameter ADDR_OPA             = 8'h08;
   parameter ADDR_OPB             = 8'h09;
 
-  parameter ADDR_RND             = 8'h10;
+  parameter ADDR_ENTROPY         = 8'h10;
+  parameter ADDR_RND             = 8'h20;
 
 
   //----------------------------------------------------------------
@@ -88,12 +87,14 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  wire         rnd_data;
-  wire         rnd_valid;
-  reg          rnd_ack;
+  wire [31 : 0] entropy;
 
-  reg [31 : 0] tmp_read_data;
-  reg          tmp_error;
+  wire [31 : 0] rnd_data;
+  wire          rnd_valid;
+  reg           rnd_ack;
+
+  reg [31 : 0]  tmp_read_data;
+  reg           tmp_error;
 
 
   //----------------------------------------------------------------
@@ -137,7 +138,7 @@ module rosc_entropy(
     begin
       if (!reset_n)
         begin
-          en_reg   <== 1;
+          en_reg   <= 1;
           op_a_reg <= 32'h01010101;
           op_a_reg <= 32'h10101010;
         end
@@ -220,18 +221,23 @@ module rosc_entropy(
 
                 ADDR_STATUS:
                   begin
-                    tmp_read_data[STATUS_RND_VALUD_BIT] = rnd_valid;
+                    tmp_read_data[STATUS_RND_VALID_BIT] = rnd_valid;
                   end
 
               ADDR_OPA:
                 begin
-                  tmp_read_data = opa_a_reg;
+                  tmp_read_data = op_a_reg;
                 end
 
               ADDR_OPB:
                 begin
-                  tmp_read_data = opa_b_reg;
+                  tmp_read_data = op_b_reg;
                 end
+
+                ADDR_ENTROPY:
+                  begin
+                    tmp_read_data = entropy;
+                  end
 
                 ADDR_RND:
                   begin

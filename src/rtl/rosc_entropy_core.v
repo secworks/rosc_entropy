@@ -59,7 +59,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  parameter NUM_SHIFT_BITS    = 8'20;
+  parameter NUM_SHIFT_BITS    = 8'h20;
   parameter SAMPLE_CLK_CYCLES = 8'hff;
 
 
@@ -106,7 +106,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   assign entropy   = ent_shift_reg;
   assign rnd_data  = rnd_reg;
-  assugn rnd_valid = rnd_valid_reg;
+  assign rnd_valid = rnd_valid_reg;
   assign debug     = debug_reg;
 
 
@@ -125,7 +125,7 @@ module rosc_entropy_core(
                                 .reset_n(reset_n),
                                 .opa(opa),
                                 .opb(opb),
-                                .dout(rosc_dout)
+                                .dout(rosc_dout[i])
                                );
       end
   endgenerate
@@ -167,7 +167,7 @@ module rosc_entropy_core(
               bit_ctr_reg <= bit_ctr_new;
             end
 
-          if (rnd_we_we)
+          if (rnd_we)
             begin
               rnd_reg <= ent_shift_reg;
             end
@@ -179,7 +179,7 @@ module rosc_entropy_core(
 
           if (debug_update_reg)
             begin
-              debug_reg <= rnd_reg;
+              debug_reg <= rnd_reg[7 : 0];
             end
          end
     end // reg_update
@@ -193,7 +193,7 @@ module rosc_entropy_core(
   // When we detect and ACK, the valid flag is dropped.
   //----------------------------------------------------------------
   always @*
-    begin : rnd_gen
+    begin : rnd_out
       bit_ctr_new   = 8'h00;
       bit_ctr_we    = 0;
       rnd_we        = 0;
@@ -246,7 +246,7 @@ module rosc_entropy_core(
       ent_shift_we_new = 0;
 
       ent_bit        = ^rosc_dout;
-      ent_shift_new  = {shift_reg[30 : 0], ent_bit};
+      ent_shift_new  = {ent_shift_reg[30 : 0], ent_bit};
 
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
