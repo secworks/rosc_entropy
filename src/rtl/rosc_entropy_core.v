@@ -41,12 +41,12 @@ module rosc_entropy_core(
                          input wire           clk,
                          input wire           reset_n,
 
+                         input wire           enable,
+
                          input wire [31 : 0]  opa,
                          input wire [31 : 0]  opb,
 
-                         input wire           update,
-
-                         output wire [31 : 0] rnd,
+                         output wire [31 : 0] rnd_data,
                          output wire          rnd_valid,
                          input wire           rnd_ack,
 
@@ -60,7 +60,6 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   parameter NUM_SHIFT_BITS    = 8'20;
   parameter SAMPLE_CLK_CYCLES = 8'hff;
-
 
 
   //----------------------------------------------------------------
@@ -104,7 +103,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign rnd       = rnd_reg;
+  assign rnd_data  = rnd_reg;
   assugn rnd_valid = rnd_valid_reg;
   assign debug     = debug_reg;
 
@@ -240,16 +239,16 @@ module rosc_entropy_core(
     begin : rnd_gen
       reg ent_bit;
 
-      rosc_we     = 0;
-      bit_we_new  = 0;
-      bit_ctr_inc = 0;
+      bit_ctr_inc      = 0;
+      rosc_we          = 0;
+      ent_shift_we_new = 0;
 
       ent_bit        = ^rosc_dout;
       ent_shift_new  = {shift_reg[30 : 0], ent_bit};
 
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      if (update && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
+      if (enable && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
         begin
           sample_ctr_new   = 8'h00;
           bit_ctr_inc      = 1;
