@@ -53,8 +53,18 @@ module rosc_entropy(
 
 
   //----------------------------------------------------------------
-  // Parameters
+  // Parameters.
   //----------------------------------------------------------------
+  parameter ADDR_CTRL            = 8'h10;
+  parameter CTRL_ENABLE_BIT      = 0;
+
+  parameter ADDR_STATUS          = 8'h01;
+  parameter STATUS_RND_VALUD_BIT = 0;
+
+  parameter ADDR_OPA             = 8'h08;
+  parameter ADDR_OPB             = 8'h09;
+
+  parameter ADDR_RND             = 8'h10;
 
 
   //----------------------------------------------------------------
@@ -65,6 +75,7 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
+  reg rnd_ack;
 
 
   //----------------------------------------------------------------
@@ -75,6 +86,23 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // module instantiations.
   //----------------------------------------------------------------
+
+  rosc_entropy_core core(
+                         input wire           clk,
+                         input wire           reset_n,
+
+                         input wire           enable,
+
+                         input wire [31 : 0]  opa,
+                         input wire [31 : 0]  opb,
+
+                         output wire [31 : 0] rnd_data,
+                         output wire          rnd_valid,
+                         input wire           rnd_ack,
+
+                         output wire [7 : 0]  debug,
+                         input wire           debug_update
+                        );
 
 
   //----------------------------------------------------------------
