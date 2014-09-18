@@ -6,6 +6,7 @@
 // idea of using carry chain in adders as inverter by Bernd Paysan.
 //
 //
+//
 // Author: Joachim Strombergson
 // Copyright (c) 2014, Secworks Sweden AB
 // All rights reserved.
