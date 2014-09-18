@@ -47,37 +47,66 @@ module rosc_entropy_core(
                          input wire           update,
 
                          output wire [31 : 0] rnd,
-                         output wire          rnd_valid
+                         output wire          rnd_valid,
+                         input wire           rnd_ack,
+
+                         output wire [7 : 0]  debug,
+                         input wire           debug_update
                         );
+
+
+  //----------------------------------------------------------------
+  // Parameters
+  //----------------------------------------------------------------
+  parameter NUM_SHIFT_BITS    = 8'20;
+  parameter SAMPLE_CLK_CYCLES = 8'hff;
+
 
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg [31 : 0] shift_reg;
-  reg          shift_we;
+  reg [31 : 0] ent_shift_reg;
+  reg [31 : 0] ent_shift_new;
+
+  reg          ent_shift_we_reg;
+  reg          ent_shift_we_new;
+
   reg [31 : 0] rnd_reg;
-  reg [4 : 0]  bit_ctr_reg;
+  reg          rnd_we;
+
+  reg          rnd_valid_reg;
+  reg          rnd_valid_new;
+  reg          rnd_valid_we;
+
+  reg          bit_we_reg;
+  reg          bit_we_new;
+
+  reg [7 : 0]  bit_ctr_reg;
+  reg [7 : 0]  bit_ctr_new;
+  reg          bit_ctr_inc;
+  reg          bit_ctr_we;
+
   reg [7 : 0]  sample_ctr_reg;
   reg [7 : 0]  sample_ctr_new;
+
+  reg [7 : 0]  debug_reg;
+  reg          debug_update_reg;
 
 
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg          bit_new;
-
-  reg          rosc_we;
-
-  wire [7 : 0] dout01;
-  wire [7 : 0] dout02;
-  wire [7 : 0] dout03;
+  reg           rosc_we;
+  wire [31 : 0] rosc_dout;
 
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign rnd = rnd_reg;
+  assign rnd       = rnd_reg;
+  assugn rnd_valid = rnd_valid_reg;
+  assign debug     = debug_reg;
 
 
   //----------------------------------------------------------------
@@ -88,14 +117,16 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   genvar i;
   generate
-    for(i = 0 ; i < 32 ; i = i + 1) begin: oscillators
-      rosc #(.WIDTH(1)) osc01(.clk(clk),
+    for(i = 0 ; i < 32 ; i = i + 1)
+      begin: oscillators
+        rosc #(.WIDTH(1)) osc01(.clk(clk),
+                                .we(rosc_we),
                                 .reset_n(reset_n),
-                                .opa(opa[0]),
-                                .opb(opb[0]),
-                                .dout(dout01[i])
+                                .opa(opa),
+                                .opb(opb),
+                                .dout(rosc_dout)
                                );
-    end
+      end
   endgenerate
 
 
@@ -103,54 +134,127 @@ module rosc_entropy_core(
   // reg_update
   //
   // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
+  // All registers are positive edge triggered with asynchronous
   // active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk)
+  always @ (posedge clk or negedge reset_n)
     begin
       if (!reset_n)
         begin
-          shift_reg      <= 32'h00000000;
-          rnd_reg        <= 32'h00000000;
-          bit_ctr_reg    <= 5'h00;
-          sample_ctr_reg <= 8'h00;
+          ent_shift_reg    <= 32'h00000000;
+          ent_shift_we_reg <= 0;
+          rnd_reg          <= 32'h00000000;
+          rnd_valid_reg    <= 0;
+          bit_ctr_reg      <= 8'h00;
+          sample_ctr_reg   <= 8'h00;
+          debug_reg        <= 8'h00;
+          debug_update_reg <= 0;
         end
       else
         begin
-          sample_ctr_reg <= sample_ctr_new;
+          sample_ctr_reg   <= sample_ctr_new;
+          ent_shift_we_reg <= ent_shift_we_new;
+          debug_update_reg <= debug_update;
 
-          if (update)
+          if (ent_shift_we_reg)
             begin
-              shift_reg   <= {shift_reg[30 : 0], bit_new};
-              bit_ctr_reg <= bit_ctr_reg + 1'b1;
+              ent_shift_reg <= ent_shift_new;
             end
 
-          if (bit_ctr_reg == 5'h1f)
+          if (bit_ctr_we)
             begin
-              rnd_reg <= shift_reg;
+              bit_ctr_reg <= bit_ctr_new;
+            end
+
+          if (rnd_we_we)
+            begin
+              rnd_reg <= ent_shift_reg;
+            end
+
+          if (rnd_valid_we)
+            begin
+              rnd_valid_reg <= rnd_valid_new;
+            end
+
+          if (debug_update_reg)
+            begin
+              debug_reg <= rnd_reg;
+            end
+         end
+    end // reg_update
+
+
+  //----------------------------------------------------------------
+  // rnd_out
+  //
+  // Logic that implements the random output control. If we have
+  // added more than NUM_SHIFT_BITS we raise the rnd_valid flag.
+  // When we detect and ACK, the valid flag is dropped.
+  //----------------------------------------------------------------
+  always @*
+    begin : rnd_gen
+      bit_ctr_new   = 8'h00;
+      bit_ctr_we    = 0;
+      rnd_we        = 0;
+      rnd_valid_new = 0;
+      rnd_valid_we  = 0;
+
+      if (bit_ctr_inc)
+        begin
+
+          if (bit_ctr_reg < NUM_SHIFT_BITS)
+            begin
+              bit_ctr_new = bit_ctr_reg + 1'b1;
+              bit_ctr_we  = 1;
+            end
+          else
+            begin
+              rnd_we        = 1;
+              rnd_valid_new = 1;
+              rnd_valid_we  = 1;
             end
         end
-    end // reg_update
+
+      if (rnd_ack)
+        begin
+          bit_ctr_new   = 8'h00;
+          bit_ctr_we    = 1;
+          rnd_valid_new = 0;
+          rnd_valid_we  = 1;
+        end
+    end
 
 
   //----------------------------------------------------------------
   // rnd_gen
   //
   // Logic that implements the actual random bit value generator
-  // by mixing the oscillator outputs.
+  // by XOR mixing the oscillator outputs. These outputs are
+  // sampled once every SAMPLE_CLK_CYCLES.
+  //
+  // Note that the update of the shift register is delayed
+  // one cycle to allow the outputs from the oscillators
+  // to be updated.
   //----------------------------------------------------------------
   always @*
     begin : rnd_gen
-      reg osc1_mix;
-      reg osc2_mix;
+      reg ent_bit;
 
-      rosc_we = 0;
+      rosc_we     = 0;
+      bit_we_new  = 0;
+      bit_ctr_inc = 0;
+
+      ent_bit        = ^rosc_dout;
+      ent_shift_new  = {shift_reg[30 : 0], ent_bit};
+
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      if (sample_ctr_reg == 8'hff)
+      if (update && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
         begin
-          bit_new = ^dout01;
-          rosc_we = 1;
+          sample_ctr_new   = 8'h00;
+          bit_ctr_inc      = 1;
+          rosc_we          = 1;
+          ent_shift_we_new = 1;
         end
     end
 endmodule // rosc_entropy_core
