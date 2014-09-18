@@ -43,6 +43,8 @@ module rosc_entropy(
                     output wire [7 : 0]  debug,
                     input wire           debug_update,
 
+                    output [31 : 0]      entropy,
+
                     input wire           cs,
                     input wire           we,
                     input wire  [7 : 0]  address,
@@ -112,6 +114,8 @@ module rosc_entropy(
 
                          .opa(op_a_reg),
                          .opb(op_b_reg),
+
+                         .entropy(entropy),
 
                          .rnd_data(rnd_data),
                          .rnd_valid(rnd_valid),
