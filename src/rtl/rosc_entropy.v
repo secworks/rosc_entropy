@@ -67,6 +67,8 @@ module rosc_entropy(
   parameter ADDR_ENTROPY         = 8'h10;
   parameter ADDR_RND             = 8'h20;
 
+  parameter DEFAULT_OP           = 8'haaaaaaaa;
+
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
@@ -139,8 +141,8 @@ module rosc_entropy(
       if (!reset_n)
         begin
           en_reg   <= 1;
-          op_a_reg <= 32'h55555555;
-          op_b_reg <= 32'haaaaaaaa;
+          op_a_reg <= DEFAULT_OP;
+          op_b_reg <= ~DEFAULT_OP;
         end
       else
         begin

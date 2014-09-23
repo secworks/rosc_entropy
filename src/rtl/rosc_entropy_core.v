@@ -59,6 +59,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
+  parameter DEBUG_DELAY       = 32'h002c4b40;
   parameter NUM_SHIFT_BITS    = 8'h20;
   parameter SAMPLE_CLK_CYCLES = 8'hff;
 
@@ -68,9 +69,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   reg [31 : 0] ent_shift_reg;
   reg [31 : 0] ent_shift_new;
-
-  reg          ent_shift_we_reg;
-  reg          ent_shift_we_new;
+  reg          ent_shift_we;
 
   reg [31 : 0] rnd_reg;
   reg          rnd_we;
@@ -90,7 +89,13 @@ module rosc_entropy_core(
   reg [7 : 0]  sample_ctr_reg;
   reg [7 : 0]  sample_ctr_new;
 
+  reg [31 : 0] delay_ctr_reg;
+  reg [31 : 0] delay_ctr_new;
+  reg          delay_ctr_we;
+
   reg [7 : 0]  debug_reg;
+  reg          debug_we;
+
   reg          debug_update_reg;
 
 
@@ -143,21 +148,20 @@ module rosc_entropy_core(
       if (!reset_n)
         begin
           ent_shift_reg    <= 32'h00000000;
-          ent_shift_we_reg <= 0;
           rnd_reg          <= 32'h00000000;
           rnd_valid_reg    <= 0;
           bit_ctr_reg      <= 8'h00;
           sample_ctr_reg   <= 8'h00;
+          delay_ctr_reg    <= 32'h00000000;
           debug_reg        <= 8'h00;
           debug_update_reg <= 0;
         end
       else
         begin
           sample_ctr_reg   <= sample_ctr_new;
-          ent_shift_we_reg <= ent_shift_we_new;
           debug_update_reg <= debug_update;
 
-          if (ent_shift_we_reg)
+          if (ent_shift_we)
             begin
               ent_shift_reg <= ent_shift_new;
             end
@@ -177,12 +181,42 @@ module rosc_entropy_core(
               rnd_valid_reg <= rnd_valid_new;
             end
 
-          if (debug_update_reg)
+          if (delay_ctr_we)
             begin
-              debug_reg <= rnd_reg[7 : 0];
+              delay_ctr_reg <= delay_ctr_new;
+            end
+
+          if (debug_we)
+            begin
+              debug_reg <= ent_shift_reg[7 : 0];
             end
          end
     end // reg_update
+
+
+  //----------------------------------------------------------------
+  // debug_out
+  //----------------------------------------------------------------
+  always @*
+    begin : debug_out
+      delay_ctr_new = 8'h00000000;
+      delay_ctr_we  = 0;
+      debug_we      = 0;
+
+      if (debug_update_reg)
+        begin
+          delay_ctr_new = delay_ctr_reg + 1'b1;
+          delay_ctr_we  = 1;
+        end
+
+      if (delay_ctr_reg == DEBUG_DELAY)
+        begin
+          delay_ctr_new = 8'h00000000;
+          delay_ctr_we  = 1;
+          debug_we      = 1;
+        end
+
+    end
 
 
   //----------------------------------------------------------------
@@ -232,30 +266,26 @@ module rosc_entropy_core(
   // Logic that implements the actual random bit value generator
   // by XOR mixing the oscillator outputs. These outputs are
   // sampled once every SAMPLE_CLK_CYCLES.
-  //
-  // Note that the update of the shift register is delayed
-  // one cycle to allow the outputs from the oscillators
-  // to be updated.
   //----------------------------------------------------------------
   always @*
     begin : rnd_gen
       reg ent_bit;
 
-      bit_ctr_inc      = 0;
-      rosc_we          = 0;
-      ent_shift_we_new = 0;
+      bit_ctr_inc  = 0;
+      rosc_we      = 0;
+      ent_shift_we = 0;
 
       ent_bit        = ^rosc_dout;
       ent_shift_new  = {ent_shift_reg[30 : 0], ent_bit};
 
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      if (enable && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
+      if (sample_ctr_reg == SAMPLE_CLK_CYCLES)
         begin
           sample_ctr_new   = 8'h00;
           bit_ctr_inc      = 1;
           rosc_we          = 1;
-          ent_shift_we_new = 1;
+          ent_shift_we     = 1;
         end
     end
 endmodule // rosc_entropy_core
