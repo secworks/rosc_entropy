@@ -140,7 +140,7 @@ module rosc_entropy(
         begin
           en_reg   <= 1;
           op_a_reg <= 32'h55555555;
-          op_a_reg <= 32'haaaaaaaa;
+          op_b_reg <= 32'haaaaaaaa;
         end
       else
         begin
