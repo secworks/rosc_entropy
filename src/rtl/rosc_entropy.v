@@ -139,8 +139,8 @@ module rosc_entropy(
       if (!reset_n)
         begin
           en_reg   <= 1;
-          op_a_reg <= 32'h01010101;
-          op_a_reg <= 32'h10101010;
+          op_a_reg <= 32'h55555555;
+          op_a_reg <= 32'haaaaaaaa;
         end
       else
         begin
