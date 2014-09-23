@@ -77,7 +77,7 @@ module rosc #(parameter WIDTH = 2)
            begin
              if (we)
                begin
-                 dout_reg <= sum[WIDTH];
+                 dout_reg <= dout_new;
                end
            end
        end
