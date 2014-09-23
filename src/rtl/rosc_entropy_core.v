@@ -120,13 +120,13 @@ module rosc_entropy_core(
   generate
     for(i = 0 ; i < 32 ; i = i + 1)
       begin: oscillators
-        rosc #(.WIDTH(1)) osc01(.clk(clk),
-                                .we(rosc_we),
-                                .reset_n(reset_n),
-                                .opa(opa),
-                                .opb(opb),
-                                .dout(rosc_dout[i])
-                               );
+        rosc #(.WIDTH(1)) osc_array(.clk(clk),
+                                    .we(rosc_we),
+                                    .reset_n(reset_n),
+                                    .opa(opa),
+                                    .opb(opb),
+                                    .dout(rosc_dout[i])
+                                   );
       end
   endgenerate
 
