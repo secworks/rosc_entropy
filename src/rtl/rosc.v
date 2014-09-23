@@ -55,13 +55,7 @@ module rosc #(parameter WIDTH = 2)
   // Registers.
   //----------------------------------------------------------------
   reg dout_reg;
-
-
-  //----------------------------------------------------------------
-  // Wires.
-  //----------------------------------------------------------------
-  reg [WIDTH : 0] sum;
-  reg 	          cin;
+  reg dout_new;
 
 
   //----------------------------------------------------------------
@@ -83,7 +77,7 @@ module rosc #(parameter WIDTH = 2)
            begin
              if (we)
                begin
-                 dout_reg <= cin;
+                 dout_reg <= sum[WIDTH];
                end
            end
        end
@@ -99,8 +93,12 @@ module rosc #(parameter WIDTH = 2)
   //----------------------------------------------------------------
   always @*
     begin: adder_osc
+      reg [WIDTH : 0] sum;
+      reg             cin;
+
       cin = ~sum[WIDTH];
       sum = opa + opb + cin;
+      dout_new = sum[WIDTH];
     end
 endmodule // rosc
 
