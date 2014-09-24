@@ -196,6 +196,8 @@ module rosc_entropy_core(
 
   //----------------------------------------------------------------
   // debug_out
+  //
+  // Logic that updates the debug port.
   //----------------------------------------------------------------
   always @*
     begin : debug_out
@@ -215,7 +217,6 @@ module rosc_entropy_core(
           delay_ctr_we  = 1;
           debug_we      = 1;
         end
-
     end
 
 
