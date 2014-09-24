@@ -113,7 +113,7 @@ module rosc_entropy(
                          .clk(clk),
                          .reset_n(reset_n),
 
-                         .enable(en_reg),
+                         .en(en_reg),
 
                          .rosc_op(op_reg),
 
@@ -188,8 +188,8 @@ module rosc_entropy(
 
                 ADDR_OP:
                   begin
-                    op_a_new = write_data;
-                    op_a_we  = 1;
+                    op_new = write_data;
+                    op_we  = 1;
                   end
 
                 default:
