@@ -40,6 +40,8 @@ module rosc_entropy_core(
                          input wire           clk,
                          input wire           reset_n,
 
+                         input wire           en,
+
                          input wire [31 : 0]  rosc_op,
 
                          output wire [31 : 0] rosc_outputs,
@@ -286,7 +288,7 @@ module rosc_entropy_core(
 
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      if (sample_ctr_reg == SAMPLE_CLK_CYCLES)
+      if (en && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
         begin
           sample_ctr_new   = 8'h00;
           bit_ctr_inc      = 1;
