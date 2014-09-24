@@ -100,9 +100,11 @@ module rosc_entropy(
   wire [31 : 0] raw_entropy;
   wire [31 : 0] rosc_outputs;
 
-  wire [31 : 0] entropy_data;
-  wire          entropy_valid;
-  reg           entropy_ack;
+  wire [31 : 0] internal_entropy_data;
+  wire          internal_entropy_valid;
+  wire          internal_entropy_ack;
+  reg           api_entropy_ack;
+
 
   reg [31 : 0]  tmp_read_data;
   reg           tmp_error;
@@ -111,9 +113,13 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign read_data      = tmp_read_data;
-  assign error          = tmp_error;
-  assign security_error = 0;
+  assign read_data            = tmp_read_data;
+  assign error                = tmp_error;
+  assign security_error       = 0;
+
+  assign internal_entropy_ack = api_entropy_ack | entropy_ack;
+  assign entropy_data         = internal_entropy_data;
+  assign entropy_data_valid   = internal_entropy_valid;
 
 
   //----------------------------------------------------------------
@@ -131,9 +137,9 @@ module rosc_entropy(
                          .raw_entropy(raw_entropy),
                          .rosc_outputs(rosc_outputs),
 
-                         .entropy_data(entropy_data),
-                         .entropy_valid(entropy_valid),
-                         .entropy_ack(entropy_ack),
+                         .entropy_data(internal_entropy_data),
+                         .entropy_valid(internal_entropy_valid),
+                         .entropy_ack(internal_entropy_ack),
 
                          .debug(debug),
                          .debug_update(debug_update)
@@ -183,15 +189,15 @@ module rosc_entropy(
   //----------------------------------------------------------------
   always @*
     begin : api_logic
-      en_new        = 0;
-      en_we         = 0;
-      op_a_new      = 0;
-      op_a_we       = 0;
-      op_b_new      = 0;
-      op_b_we       = 0;
-      entropy_ack   = 0;
-      tmp_read_data = 32'h00000000;
-      tmp_error     = 0;
+      en_new          = 0;
+      en_we           = 0;
+      op_a_new        = 0;
+      op_a_we         = 0;
+      op_b_new        = 0;
+      op_b_we         = 0;
+      api_entropy_ack = 0;
+      tmp_read_data   = 32'h00000000;
+      tmp_error       = 0;
 
       if (cs)
         begin
@@ -249,7 +255,7 @@ module rosc_entropy(
                 ADDR_ENTROPY:
                   begin
                     tmp_read_data = entropy_data;
-                    entropy_ack   = 1;
+                    api_entropy_ack = 1;
                   end
 
                 ADDR_RAW:
