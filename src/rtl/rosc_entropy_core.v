@@ -42,7 +42,8 @@ module rosc_entropy_core(
 
                          input wire           en,
 
-                         input wire [31 : 0]  rosc_op,
+                         input wire [31 : 0]  opa,
+                         input wire [31 : 0]  opb,
 
                          output wire [31 : 0] raw_entropy,
                          output wire [31 : 0] rosc_outputs,
@@ -102,9 +103,6 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  wire [31 : 0] opa;
-  wire [31 : 0] opb;
-
   reg           rosc_we;
   wire [31 : 0] rosc_dout;
 
@@ -112,9 +110,6 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign opa = rosc_op;
-  assign opb = ~rosc_op;
-
   assign rosc_outputs  = rosc_dout;
   assign raw_entropy   = ent_shift_reg;
   assign entropy_data  = entropy_reg;

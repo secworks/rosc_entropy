@@ -63,13 +63,15 @@ module rosc_entropy(
   parameter ADDR_STATUS              = 8'h01;
   parameter STATUS_ENTROPY_VALID_BIT = 0;
 
-  parameter ADDR_OP                  = 8'h08;
+  parameter ADDR_OP_A                = 8'h08;
+  parameter ADDR_OP_B                = 8'h09;
 
   parameter ADDR_ENTROPY             = 8'h10;
   parameter ADDR_RAW                 = 8'h20;
   parameter ADDR_ROSC_OUTPUTS        = 8'h21;
 
-  parameter DEFAULT_OP               = 8'haaaaaaaa;
+  parameter DEFAULT_OP_A             = 8'haaaaaaaa;
+  parameter DEFAULT_OP_B             = ~DEFAULT_OP_A;
 
 
   //----------------------------------------------------------------
@@ -79,9 +81,13 @@ module rosc_entropy(
   reg          en_new;
   reg          en_we;
 
-  reg [31 : 0] op_reg;
-  reg [31 : 0] op_new;
-  reg          op_we;
+  reg [31 : 0] op_a_reg;
+  reg [31 : 0] op_a_new;
+  reg          op_a_we;
+
+  reg [31 : 0] op_b_reg;
+  reg [31 : 0] op_b_new;
+  reg          op_b_we;
 
 
   //----------------------------------------------------------------
@@ -115,7 +121,8 @@ module rosc_entropy(
 
                          .en(en_reg),
 
-                         .rosc_op(op_reg),
+                         .opa(op_a_reg),
+                         .opb(op_b_reg),
 
                          .raw_entropy(raw_entropy),
                          .rosc_outputs(rosc_outputs),
@@ -140,8 +147,9 @@ module rosc_entropy(
     begin
       if (!reset_n)
         begin
-          en_reg <= 1;
-          op_reg <= DEFAULT_OP;
+          en_reg   <= 1;
+          op_a_reg <= DEFAULT_OP_A;
+          op_b_reg <= DEFAULT_OP_B;
         end
       else
         begin
@@ -150,9 +158,14 @@ module rosc_entropy(
               en_reg <= en_new;
             end
 
-          if (op_we)
+          if (op_a_we)
             begin
-              op_reg <= op_new;
+              op_a_reg <= op_a_new;
+            end
+
+          if (op_b_we)
+            begin
+              op_b_reg <= op_b_new;
             end
          end
     end // reg_update
@@ -168,8 +181,10 @@ module rosc_entropy(
     begin : api_logic
       en_new        = 0;
       en_we         = 0;
-      op_new        = 0;
-      op_we         = 0;
+      op_a_new      = 0;
+      op_a_we       = 0;
+      op_b_new      = 0;
+      op_b_we       = 0;
       entropy_ack   = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
@@ -186,10 +201,16 @@ module rosc_entropy(
                     en_we  = 1;
                   end
 
-                ADDR_OP:
+                ADDR_OP_A:
                   begin
-                    op_new = write_data;
-                    op_we  = 1;
+                    op_a_new = write_data;
+                    op_a_we  = 1;
+                  end
+
+                ADDR_OP_B:
+                  begin
+                    op_b_new = write_data;
+                    op_b_we  = 1;
                   end
 
                 default:
@@ -211,9 +232,14 @@ module rosc_entropy(
                     tmp_read_data[STATUS_ENTROPY_VALID_BIT] = entropy_valid;
                   end
 
-                ADDR_OP:
+                ADDR_OP_A:
                   begin
-                    tmp_read_data = op_reg;
+                    tmp_read_data = op_a_reg;
+                  end
+
+                ADDR_OP_B:
+                  begin
+                    tmp_read_data = op_b_reg;
                   end
 
                 ADDR_ENTROPY:
