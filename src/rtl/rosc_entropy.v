@@ -55,19 +55,19 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  parameter ADDR_CTRL            = 8'h00;
-  parameter CTRL_ENABLE_BIT      = 0;
+  parameter ADDR_CTRL                = 8'h00;
+  parameter CTRL_ENABLE_BIT          = 0;
 
-  parameter ADDR_STATUS          = 8'h01;
-  parameter STATUS_RND_VALID_BIT = 0;
+  parameter ADDR_STATUS              = 8'h01;
+  parameter STATUS_ENTROPY_VALID_BIT = 0;
 
-  parameter ADDR_OPA             = 8'h08;
-  parameter ADDR_OPB             = 8'h09;
+  parameter ADDR_OP                  = 8'h08;
 
-  parameter ADDR_ENTROPY         = 8'h10;
-  parameter ADDR_RND             = 8'h20;
+  parameter ADDR_ENTROPY             = 8'h10;
+  parameter ADDR_RAW                 = 8'h20;
+  parameter ADDR_ROSC_OUTPUTS        = 8'h21;
 
-  parameter DEFAULT_OP           = 8'haaaaaaaa;
+  parameter DEFAULT_OP               = 8'haaaaaaaa;
 
 
   //----------------------------------------------------------------
