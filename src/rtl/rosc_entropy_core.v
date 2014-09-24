@@ -44,8 +44,8 @@ module rosc_entropy_core(
 
                          input wire [31 : 0]  rosc_op,
 
-                         output wire [31 : 0] rosc_outputs,
                          output wire [31 : 0] raw_entropy,
+                         output wire [31 : 0] rosc_outputs,
 
                          output wire [31 : 0] entropy_data,
                          output wire          entropy_valid,
