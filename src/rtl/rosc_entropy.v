@@ -48,7 +48,9 @@ module rosc_entropy(
                     input wire  [7 : 0]  address,
                     input wire  [31 : 0] write_data,
                     output wire [31 : 0] read_data,
-                    output wire          error
+                    output wire          error,
+
+                    output wire          security_error
                    );
 
 
@@ -99,8 +101,9 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign read_data = tmp_read_data;
-  assign error     = tmp_error;
+  assign read_data      = tmp_read_data;
+  assign error          = tmp_error;
+  assign security_error = 0;
 
 
   //----------------------------------------------------------------
