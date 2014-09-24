@@ -87,9 +87,9 @@ module rosc_entropy_core(
   reg [7 : 0]  sample_ctr_reg;
   reg [7 : 0]  sample_ctr_new;
 
-  reg [31 : 0] delay_ctr_reg;
-  reg [31 : 0] delay_ctr_new;
-  reg          delay_ctr_we;
+  reg [31 : 0] debug_delay_ctr_reg;
+  reg [31 : 0] debug_delay_ctr_new;
+  reg          debug_delay_ctr_we;
 
   reg [7 : 0]  debug_reg;
   reg          debug_we;
@@ -100,6 +100,9 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
+  wire [31 : 0] opa;
+  wire [31 : 0] opb;
+
   reg           rosc_we;
   wire [31 : 0] rosc_dout;
 
@@ -107,6 +110,9 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
+  assign opa = rosc_op;
+  assign opb = ~rosc_op;
+
   assign rosc_outputs  = rosc_dout;
   assign raw_entropy   = ent_shift_reg;
   assign entropy_data  = entropy_reg;
@@ -151,7 +157,7 @@ module rosc_entropy_core(
           rnd_valid_reg    <= 0;
           bit_ctr_reg      <= 8'h00;
           sample_ctr_reg   <= 8'h00;
-          delay_ctr_reg    <= 32'h00000000;
+          debug_delay_ctr_reg    <= 32'h00000000;
           debug_reg        <= 8'h00;
           debug_update_reg <= 0;
         end
@@ -180,9 +186,9 @@ module rosc_entropy_core(
               rnd_valid_reg <= rnd_valid_new;
             end
 
-          if (delay_ctr_we)
+          if (debug_delay_ctr_we)
             begin
-              delay_ctr_reg <= delay_ctr_new;
+              debug_delay_ctr_reg <= debug_delay_ctr_new;
             end
 
           if (debug_we)
@@ -200,21 +206,21 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   always @*
     begin : debug_out
-      delay_ctr_new = 8'h00000000;
-      delay_ctr_we  = 0;
-      debug_we      = 0;
+      debug_delay_ctr_new = 8'h00000000;
+      debug_delay_ctr_we  = 0;
+      debug_we            = 0;
 
       if (debug_update_reg)
         begin
-          delay_ctr_new = delay_ctr_reg + 1'b1;
-          delay_ctr_we  = 1;
+          debug_delay_ctr_new = debug_delay_ctr_reg + 1'b1;
+          debug_delay_ctr_we  = 1;
         end
 
-      if (delay_ctr_reg == DEBUG_DELAY)
+      if (debug_delay_ctr_reg == DEBUG_DELAY)
         begin
-          delay_ctr_new = 8'h00000000;
-          delay_ctr_we  = 1;
-          debug_we      = 1;
+          debug_delay_ctr_new = 8'h00000000;
+          debug_delay_ctr_we  = 1;
+          debug_we            = 1;
         end
     end
 
