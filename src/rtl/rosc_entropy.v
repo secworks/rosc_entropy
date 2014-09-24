@@ -77,23 +77,20 @@ module rosc_entropy(
   reg          en_new;
   reg          en_we;
 
-  reg [31 : 0] op_a_reg;
-  reg [31 : 0] op_a_new;
-  reg          op_a_we;
-
-  reg [31 : 0] op_b_reg;
-  reg [31 : 0] op_b_new;
-  reg          op_b_we;
+  reg [31 : 0] op_reg;
+  reg [31 : 0] op_new;
+  reg          op_we;
 
 
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  wire [31 : 0] entropy;
+  wire [31 : 0] raw_entropy;
+  wire [31 : 0] rosc_outputs;
 
-  wire [31 : 0] rnd_data;
-  wire          rnd_valid;
-  reg           rnd_ack;
+  wire [31 : 0] entropy_data;
+  wire          entropy_valid;
+  reg           entropy_ack;
 
   reg [31 : 0]  tmp_read_data;
   reg           tmp_error;
@@ -115,14 +112,14 @@ module rosc_entropy(
 
                          .enable(en_reg),
 
-                         .opa(op_a_reg),
-                         .opb(op_b_reg),
+                         .rosc_op(op_reg),
 
-                         .entropy(entropy),
+                         .raw_entropy(raw_entropy),
+                         .rosc_outputs(rosc_outputs),
 
-                         .rnd_data(rnd_data),
-                         .rnd_valid(rnd_valid),
-                         .rnd_ack(rnd_ack),
+                         .entropy_data(entropy_data),
+                         .entropy_valid(entropy_valid),
+                         .entropy_ack(entropy_ack),
 
                          .debug(debug),
                          .debug_update(debug_update)
@@ -179,7 +176,7 @@ module rosc_entropy(
       op_a_we       = 0;
       op_b_new      = 0;
       op_b_we       = 0;
-      rnd_ack       = 0;
+      entropy_ack       = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
 
@@ -223,28 +220,28 @@ module rosc_entropy(
 
                 ADDR_STATUS:
                   begin
-                    tmp_read_data[STATUS_RND_VALID_BIT] = rnd_valid;
+                    tmp_read_data[STATUS_ENTROPY_VALID_BIT] = entropy_valid;
                   end
 
-              ADDR_OPA:
-                begin
-                  tmp_read_data = op_a_reg;
-                end
-
-              ADDR_OPB:
-                begin
-                  tmp_read_data = op_b_reg;
-                end
+                ADDR_OP:
+                  begin
+                    tmp_read_data = op_reg;
+                  end
 
                 ADDR_ENTROPY:
                   begin
-                    tmp_read_data = entropy;
+                    tmp_read_data = entropy_data;
+                    entropy_ack   = 1;
                   end
 
-                ADDR_RND:
+                ADDR_RAW:
                   begin
-                    tmp_read_data = rnd_data;
-                    rnd_ack       = 1;
+                    tmp_read_data = raw_entropy;
+                  end
+
+                ADDR_ROSC_OUTPUTS:
+                  begin
+                    tmp_read_data = rosc_outputs;
                   end
 
                 default:
