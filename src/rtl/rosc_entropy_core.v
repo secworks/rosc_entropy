@@ -69,12 +69,12 @@ module rosc_entropy_core(
   reg [31 : 0] ent_shift_new;
   reg          ent_shift_we;
 
-  reg [31 : 0] rnd_reg;
-  reg          rnd_we;
+  reg [31 : 0] entropy_reg;
+  reg          entropy_we;
 
-  reg          rnd_valid_reg;
-  reg          rnd_valid_new;
-  reg          rnd_valid_we;
+  reg          entropy_valid_reg;
+  reg          entropy_valid_new;
+  reg          entropy_valid_we;
 
   reg          bit_we_reg;
   reg          bit_we_new;
@@ -152,14 +152,14 @@ module rosc_entropy_core(
     begin
       if (!reset_n)
         begin
-          ent_shift_reg    <= 32'h00000000;
-          rnd_reg          <= 32'h00000000;
-          rnd_valid_reg    <= 0;
-          bit_ctr_reg      <= 8'h00;
-          sample_ctr_reg   <= 8'h00;
-          debug_delay_ctr_reg    <= 32'h00000000;
-          debug_reg        <= 8'h00;
-          debug_update_reg <= 0;
+          ent_shift_reg       <= 32'h00000000;
+          entropy_reg         <= 32'h00000000;
+          entropy_valid_reg   <= 0;
+          bit_ctr_reg         <= 8'h00;
+          sample_ctr_reg      <= 8'h00;
+          debug_delay_ctr_reg <= 32'h00000000;
+          debug_reg           <= 8'h00;
+          debug_update_reg    <= 0;
         end
       else
         begin
@@ -176,14 +176,14 @@ module rosc_entropy_core(
               bit_ctr_reg <= bit_ctr_new;
             end
 
-          if (rnd_we)
+          if (entropy_we)
             begin
-              rnd_reg <= ent_shift_reg;
+              entropy_reg <= ent_shift_reg;
             end
 
-          if (rnd_valid_we)
+          if (entropy_valid_we)
             begin
-              rnd_valid_reg <= rnd_valid_new;
+              entropy_valid_reg <= entropy_valid_new;
             end
 
           if (debug_delay_ctr_we)
@@ -226,19 +226,19 @@ module rosc_entropy_core(
 
 
   //----------------------------------------------------------------
-  // rnd_out
+  // entropy_out
   //
   // Logic that implements the random output control. If we have
-  // added more than NUM_SHIFT_BITS we raise the rnd_valid flag.
+  // added more than NUM_SHIFT_BITS we raise the entropy_valid flag.
   // When we detect and ACK, the valid flag is dropped.
   //----------------------------------------------------------------
   always @*
-    begin : rnd_out
-      bit_ctr_new   = 8'h00;
-      bit_ctr_we    = 0;
-      rnd_we        = 0;
-      rnd_valid_new = 0;
-      rnd_valid_we  = 0;
+    begin : entropy_out
+      bit_ctr_new       = 8'h00;
+      bit_ctr_we        = 0;
+      entropy_we        = 0;
+      entropy_valid_new = 0;
+      entropy_valid_we  = 0;
 
       if (bit_ctr_inc)
         begin
@@ -250,31 +250,31 @@ module rosc_entropy_core(
             end
           else
             begin
-              rnd_we        = 1;
-              rnd_valid_new = 1;
-              rnd_valid_we  = 1;
+              entropy_we        = 1;
+              entropy_valid_new = 1;
+              entropy_valid_we  = 1;
             end
         end
 
-      if (rnd_ack)
+      if (entropy_ack)
         begin
-          bit_ctr_new   = 8'h00;
-          bit_ctr_we    = 1;
-          rnd_valid_new = 0;
-          rnd_valid_we  = 1;
+          bit_ctr_new       = 8'h00;
+          bit_ctr_we        = 1;
+          entropy_valid_new = 0;
+          entropy_valid_we  = 1;
         end
     end
 
 
   //----------------------------------------------------------------
-  // rnd_gen
+  // entropy_gen
   //
-  // Logic that implements the actual random bit value generator
+  // Logic that implements the actual entropy bit value generator
   // by XOR mixing the oscillator outputs. These outputs are
   // sampled once every SAMPLE_CLK_CYCLES.
   //----------------------------------------------------------------
   always @*
-    begin : rnd_gen
+    begin : entropy_gen
       reg ent_bit;
 
       bit_ctr_inc  = 0;
