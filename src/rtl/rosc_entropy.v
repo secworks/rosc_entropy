@@ -47,7 +47,7 @@ module rosc_entropy(
                     output wire [31 : 0] read_data,
                     output wire          error,
 
-                    output wire          entropy_enbled,
+                    output wire          entropy_enabled,
                     output wire [31 : 0] entropy_data,
                     output wire          entropy_valid,
                     input wire           entropy_ack,
@@ -75,7 +75,7 @@ module rosc_entropy(
   parameter ADDR_RAW                 = 8'h20;
   parameter ADDR_ROSC_OUTPUTS        = 8'h21;
 
-  parameter DEFAULT_OP_A             = 8'haaaaaaaa;
+  parameter DEFAULT_OP_A             = 32'haaaaaaaa;
   parameter DEFAULT_OP_B             = ~DEFAULT_OP_A;
 
 
@@ -120,7 +120,7 @@ module rosc_entropy(
 
   assign entropy_enabled      = en_reg;
   assign entropy_data         = internal_entropy_data;
-  assign entropy_data_valid   = internal_entropy_valid;
+  assign entropy_valid        = internal_entropy_valid;
   assign internal_entropy_ack = api_entropy_ack | entropy_ack;
 
 
@@ -241,7 +241,7 @@ module rosc_entropy(
 
                 ADDR_STATUS:
                   begin
-                    tmp_read_data[STATUS_ENTROPY_VALID_BIT] = entropy_valid;
+                    tmp_read_data[STATUS_ENTROPY_VALID_BIT] = internal_entropy_valid;
                   end
 
                 ADDR_OP_A:
