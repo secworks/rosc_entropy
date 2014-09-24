@@ -47,6 +47,7 @@ module rosc_entropy(
                     output wire [31 : 0] read_data,
                     output wire          error,
 
+                    output wire          entropy_enbled,
                     output wire [31 : 0] entropy_data,
                     output wire          entropy_valid,
                     input wire           entropy_ack,
@@ -117,9 +118,10 @@ module rosc_entropy(
   assign error                = tmp_error;
   assign security_error       = 0;
 
-  assign internal_entropy_ack = api_entropy_ack | entropy_ack;
+  assign entropy_enabled      = en_reg;
   assign entropy_data         = internal_entropy_data;
   assign entropy_data_valid   = internal_entropy_valid;
+  assign internal_entropy_ack = api_entropy_ack | entropy_ack;
 
 
   //----------------------------------------------------------------
