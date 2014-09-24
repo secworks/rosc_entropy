@@ -47,15 +47,16 @@ module rosc_entropy(
                     output wire [31 : 0] read_data,
                     output wire          error,
 
+                    input wire           test_mode,
+                    output wire          security_error,
+
                     output wire          entropy_enabled,
                     output wire [31 : 0] entropy_data,
                     output wire          entropy_valid,
                     input wire           entropy_ack,
 
                     output wire [7 : 0]  debug,
-                    input wire           debug_update,
-
-                    output wire          security_error
+                    input wire           debug_update
                    );
 
 
