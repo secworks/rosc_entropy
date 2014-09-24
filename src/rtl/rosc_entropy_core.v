@@ -40,16 +40,14 @@ module rosc_entropy_core(
                          input wire           clk,
                          input wire           reset_n,
 
-                         input wire           enable,
+                         input wire [31 : 0]  rosc_op,
 
-                         input wire [31 : 0]  opa,
-                         input wire [31 : 0]  opb,
+                         output wire [31 : 0] rosc_outputs,
+                         output wire [31 : 0] raw_entropy,
 
-                         output [31 : 0]      entropy,
-
-                         output wire [31 : 0] rnd_data,
-                         output wire          rnd_valid,
-                         input wire           rnd_ack,
+                         output wire [31 : 0] entropy_data,
+                         output wire          entropy_valid,
+                         input wire           entropy_ack,
 
                          output wire [7 : 0]  debug,
                          input wire           debug_update
@@ -109,10 +107,11 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign entropy   = ent_shift_reg;
-  assign rnd_data  = rnd_reg;
-  assign rnd_valid = rnd_valid_reg;
-  assign debug     = debug_reg;
+  assign rosc_outputs  = rosc_dout;
+  assign raw_entropy   = ent_shift_reg;
+  assign entropy_data  = entropy_reg;
+  assign entropy_valid = entropy_valid_reg;
+  assign debug         = debug_reg;
 
 
   //----------------------------------------------------------------
