@@ -137,9 +137,8 @@ module rosc_entropy(
     begin
       if (!reset_n)
         begin
-          en_reg   <= 1;
-          op_a_reg <= DEFAULT_OP;
-          op_b_reg <= ~DEFAULT_OP;
+          en_reg <= 1;
+          op_reg <= DEFAULT_OP;
         end
       else
         begin
@@ -148,16 +147,10 @@ module rosc_entropy(
               en_reg <= en_new;
             end
 
-          if (op_a_we)
+          if (op_we)
             begin
-              op_a_reg <= op_a_new;
+              op_reg <= op_new;
             end
-
-          if (op_b_we)
-            begin
-              op_b_reg <= op_b_new;
-            end
-
          end
     end // reg_update
 
@@ -172,11 +165,9 @@ module rosc_entropy(
     begin : api_logic
       en_new        = 0;
       en_we         = 0;
-      op_a_new      = 0;
-      op_a_we       = 0;
-      op_b_new      = 0;
-      op_b_we       = 0;
-      entropy_ack       = 0;
+      op_new        = 0;
+      op_we         = 0;
+      entropy_ack   = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
 
@@ -192,16 +183,10 @@ module rosc_entropy(
                     en_we  = 1;
                   end
 
-                ADDR_OPA:
+                ADDR_OP:
                   begin
                     op_a_new = write_data;
                     op_a_we  = 1;
-                  end
-
-                ADDR_OPB:
-                  begin
-                    op_b_new = write_data;
-                    op_b_we  = 1;
                   end
 
                 default:
