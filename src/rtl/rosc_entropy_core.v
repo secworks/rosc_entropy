@@ -203,7 +203,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   always @*
     begin : debug_out
-      debug_delay_ctr_new = 8'h00000000;
+      debug_delay_ctr_new = 32'h00000000;
       debug_delay_ctr_we  = 0;
       debug_we            = 0;
 
@@ -215,7 +215,7 @@ module rosc_entropy_core(
 
       if (debug_delay_ctr_reg == DEBUG_DELAY)
         begin
-          debug_delay_ctr_new = 8'h00000000;
+          debug_delay_ctr_new = 32'h00000000;
           debug_delay_ctr_we  = 1;
           debug_we            = 1;
         end
