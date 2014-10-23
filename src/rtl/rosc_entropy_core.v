@@ -104,6 +104,9 @@ module rosc_entropy_core(
   // Wires.
   //----------------------------------------------------------------
   reg           rosc_we;
+
+  // Ugly in-line Xilinx attribute to preserve the registers.
+  (* equivalent_register_removal = "no" *)
   wire [31 : 0] rosc_dout;
 
 
