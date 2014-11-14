@@ -64,21 +64,29 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  parameter ADDR_CTRL                = 8'h00;
+  parameter ADDR_NAME0               = 8'h00;
+  parameter ADDR_NAME1               = 8'h01;
+  parameter ADDR_VERSION             = 8'h02;
+
+  parameter ADDR_CTRL                = 8'h10;
   parameter CTRL_ENABLE_BIT          = 0;
 
-  parameter ADDR_STATUS              = 8'h01;
+  parameter ADDR_STATUS              = 8'h11;
   parameter STATUS_ENTROPY_VALID_BIT = 0;
 
-  parameter ADDR_OP_A                = 8'h08;
-  parameter ADDR_OP_B                = 8'h09;
+  parameter ADDR_OP_A                = 8'h18;
+  parameter ADDR_OP_B                = 8'h19;
 
-  parameter ADDR_ENTROPY             = 8'h10;
-  parameter ADDR_RAW                 = 8'h20;
-  parameter ADDR_ROSC_OUTPUTS        = 8'h21;
+  parameter ADDR_ENTROPY             = 8'h20;
+  parameter ADDR_RAW                 = 8'h21;
+  parameter ADDR_ROSC_OUTPUTS        = 8'h22;
 
   parameter DEFAULT_OP_A             = 32'haaaaaaaa;
   parameter DEFAULT_OP_B             = ~DEFAULT_OP_A;
+
+  parameter CORE_NAME0               = 32'h726f7363; // "rosc"
+  parameter CORE_NAME1               = 32'h20656e74; // " ent"
+  parameter CORE_VERSION             = 32'h302e3130; // "0.10"
 
 
   //----------------------------------------------------------------
@@ -236,6 +244,21 @@ module rosc_entropy(
           else
             begin
               case (address)
+                ADDR_NAME0:
+                  begin
+                    tmp_read_data = CORE_NAME0;
+                  end
+
+                ADDR_NAME1:
+                  begin
+                    tmp_read_data = CORE_NAME1;
+                  end
+
+                ADDR_VERSION:
+                  begin
+                    tmp_read_data = CORE_VERSION;
+                  end
+
                 ADDR_CTRL:
                   begin
                     tmp_read_data[CTRL_ENABLE_BIT] = enable_reg;
