@@ -3,6 +3,8 @@
 // rosc_entropy_core.v
 // -------------------
 // Digitial ring oscillator based entropy generation core.
+// This version implements 32 separate oscillators where each
+// oscillator can be enabled or disabled.
 //
 //
 // Author: Joachim Strombergson
@@ -40,10 +42,11 @@ module rosc_entropy_core(
                          input wire           clk,
                          input wire           reset_n,
 
-                         input wire           en,
-
                          input wire [31 : 0]  opa,
                          input wire [31 : 0]  opb,
+
+                         input wire [31 : 0]  rosc_en,
+                         inout wire [7 : 0]   rosc_cycles,
 
                          output wire [31 : 0] raw_entropy,
                          output wire [31 : 0] rosc_outputs,
@@ -103,7 +106,7 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg           rosc_we;
+  reg [31 : 0] rosc_we;
 
   // Ugly in-line Xilinx attribute to preserve the registers.
   (* equivalent_register_removal = "no" *)
@@ -123,15 +126,17 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // module instantiations.
   //
-  // 32 1-bit wide oscillators. We want them to run as fast as
-  // possible to maximize differences over time.
+  // 32 oscillators each 1-bit wide. We want them to run as fast
+  // as possible to maximize differences over time.
+  // We also only sample the oscillators SAMPLE_CLK_CYCLES number
+  // of cycles.
   //----------------------------------------------------------------
   genvar i;
   generate
     for(i = 0 ; i < 32 ; i = i + 1)
       begin: oscillators
         rosc #(.WIDTH(1)) rosc_array(.clk(clk),
-                                     .we(rosc_we),
+                                     .we(rosc_we[i]),
                                      .reset_n(reset_n),
                                      .opa(opa),
                                      .opb(opb),
@@ -278,7 +283,7 @@ module rosc_entropy_core(
       reg ent_bit;
 
       bit_ctr_inc  = 0;
-      rosc_we      = 0;
+      rosc_we      = 32'h00000000;
       ent_shift_we = 0;
 
       ent_bit        = ^rosc_dout;
@@ -286,11 +291,11 @@ module rosc_entropy_core(
 
       sample_ctr_new = sample_ctr_reg + 1'b1;
 
-      if (en && (sample_ctr_reg == SAMPLE_CLK_CYCLES))
+      if (sample_ctr_reg == SAMPLE_CLK_CYCLES)
         begin
           sample_ctr_new   = 8'h00;
           bit_ctr_inc      = 1;
-          rosc_we          = 1;
+          rosc_we          = rosc_en;
           ent_shift_we     = 1;
         end
     end
