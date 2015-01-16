@@ -69,10 +69,11 @@ module rosc_entropy(
   parameter ADDR_VERSION             = 8'h02;
 
   parameter ADDR_CTRL                = 8'h10;
-  parameter CTRL_ENABLE_BIT          = 0;
 
   parameter ADDR_STATUS              = 8'h11;
   parameter STATUS_ENTROPY_VALID_BIT = 0;
+
+  parameter ADDR_ROSC_CYCLES         = 8'h14;
 
   parameter ADDR_OP_A                = 8'h18;
   parameter ADDR_OP_B                = 8'h19;
@@ -92,16 +93,16 @@ module rosc_entropy(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg          enable_reg;
-  reg          enable_new;
+  reg [31 : 0] enable_reg;
   reg          enable_we;
 
+  reg [7 : 0]  rosc_cycles_reg;
+  reg [7 : 0]  rosc_cycles_we;
+
   reg [31 : 0] op_a_reg;
-  reg [31 : 0] op_a_new;
   reg          op_a_we;
 
   reg [31 : 0] op_b_reg;
-  reg [31 : 0] op_b_new;
   reg          op_b_we;
 
 
@@ -116,7 +117,6 @@ module rosc_entropy(
   wire          internal_entropy_ack;
   reg           api_entropy_ack;
 
-
   reg [31 : 0]  tmp_read_data;
   reg           tmp_error;
 
@@ -128,7 +128,7 @@ module rosc_entropy(
   assign error                = tmp_error;
   assign security_error       = 0;
 
-  assign entropy_enabled      = enable_reg;
+  assign entropy_enabled      = |enable_reg;
   assign entropy_data         = internal_entropy_data;
   assign entropy_valid        = internal_entropy_valid;
   assign internal_entropy_ack = api_entropy_ack | entropy_ack;
@@ -141,10 +141,11 @@ module rosc_entropy(
                          .clk(clk),
                          .reset_n(reset_n),
 
-                         .en(enable_reg),
-
                          .opa(op_a_reg),
                          .opb(op_b_reg),
+
+                         .rosc_en(enable_reg),
+                         .rosc_cycles(rosc_cycles_reg),
 
                          .raw_entropy(raw_entropy),
                          .rosc_outputs(rosc_outputs),
@@ -169,25 +170,31 @@ module rosc_entropy(
     begin
       if (!reset_n)
         begin
-          enable_reg <= 1;
-          op_a_reg   <= DEFAULT_OP_A;
-          op_b_reg   <= DEFAULT_OP_B;
+          enable_reg      <= 32'h00000000;
+          rosc_cycles_reg <= 8'h00;
+          op_a_reg        <= DEFAULT_OP_A;
+          op_b_reg        <= DEFAULT_OP_B;
         end
       else
         begin
           if (enable_we)
             begin
-              enable_reg <= enable_new;
+              enable_reg <= write_data;
+            end
+
+          if (rosc_cycles_we)
+            begin
+              rosc_cycles_reg <= write_data[7 : 0];
             end
 
           if (op_a_we)
             begin
-              op_a_reg <= op_a_new;
+              op_a_reg <=  write_data;
             end
 
           if (op_b_we)
             begin
-              op_b_reg <= op_b_new;
+              op_b_reg <=  write_data;
             end
          end
     end // reg_update
@@ -201,11 +208,9 @@ module rosc_entropy(
   //----------------------------------------------------------------
   always @*
     begin : api_logic
-      enable_new      = 0;
       enable_we       = 0;
-      op_a_new        = 0;
+      rosc_cycles_we  = 0;
       op_a_we         = 0;
-      op_b_new        = 0;
       op_b_we         = 0;
       api_entropy_ack = 0;
       tmp_read_data   = 32'h00000000;
@@ -219,19 +224,21 @@ module rosc_entropy(
                 // Write operations.
                 ADDR_CTRL:
                   begin
-                    enable_new = write_data[CTRL_ENABLE_BIT];
                     enable_we  = 1;
+                  end
+
+                ADDR_ROSC_CYCLES:
+                  begin
+                    rosc_cycles_we = 1;
                   end
 
                 ADDR_OP_A:
                   begin
-                    op_a_new = write_data;
                     op_a_we  = 1;
                   end
 
                 ADDR_OP_B:
                   begin
-                    op_b_new = write_data;
                     op_b_we  = 1;
                   end
 
@@ -261,12 +268,17 @@ module rosc_entropy(
 
                 ADDR_CTRL:
                   begin
-                    tmp_read_data[CTRL_ENABLE_BIT] = enable_reg;
+                    tmp_read_data = enable_reg;
                   end
 
                 ADDR_STATUS:
                   begin
                     tmp_read_data[STATUS_ENTROPY_VALID_BIT] = internal_entropy_valid;
+                  end
+
+                ADDR_ROSC_CYCLES:
+                  begin
+                    tmp_read_data = rosc_cycles_reg;
                   end
 
                 ADDR_OP_A:
