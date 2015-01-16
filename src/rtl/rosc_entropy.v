@@ -82,6 +82,8 @@ module rosc_entropy(
   parameter ADDR_RAW                 = 8'h21;
   parameter ADDR_ROSC_OUTPUTS        = 8'h22;
 
+  parameter DEFAULT_ROSC_EN          = 32'hffffffff;
+  parameter DEFAULT_ROSC_CYCLES      = 8'hff;
   parameter DEFAULT_OP_A             = 32'haaaaaaaa;
   parameter DEFAULT_OP_B             = ~DEFAULT_OP_A;
 
@@ -170,8 +172,8 @@ module rosc_entropy(
     begin
       if (!reset_n)
         begin
-          enable_reg      <= 32'h00000000;
-          rosc_cycles_reg <= 8'h00;
+          enable_reg      <= 32'hffffffff;
+          rosc_cycles_reg <= 8'hff;
           op_a_reg        <= DEFAULT_OP_A;
           op_b_reg        <= DEFAULT_OP_B;
         end
