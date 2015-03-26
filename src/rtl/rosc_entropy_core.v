@@ -127,8 +127,8 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // module instantiations.
   //
-  // 32 oscillators each 1-bit wide. We want them to run as fast
-  // as possible to maximize differences over time.
+  // 32 oscillators each ADDER_WIDTH wide. We want them to run
+  // as fast as possible to maximize differences over time.
   // We also only sample the oscillators SAMPLE_CLK_CYCLES number
   // of cycles.
   //----------------------------------------------------------------
