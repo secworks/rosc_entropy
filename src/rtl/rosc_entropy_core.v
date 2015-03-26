@@ -63,9 +63,10 @@ module rosc_entropy_core(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  parameter DEBUG_DELAY       = 32'h002c4b40;
-  parameter NUM_SHIFT_BITS    = 8'h20;
-  parameter SAMPLE_CLK_CYCLES = 8'hff;
+  localparam ADDER_WIDTH       = 2;
+  localparam DEBUG_DELAY       = 32'h002c4b40;
+  localparam NUM_SHIFT_BITS    = 8'h20;
+  localparam SAMPLE_CLK_CYCLES = 8'hff;
 
 
   //----------------------------------------------------------------
@@ -135,11 +136,11 @@ module rosc_entropy_core(
   generate
     for(i = 0 ; i < 32 ; i = i + 1)
       begin: oscillators
-        rosc #(.WIDTH(1)) rosc_array(.clk(clk),
+        rosc #(.WIDTH(ADDER_WIDTH)) rosc_array(.clk(clk),
                                      .we(rosc_we[i]),
                                      .reset_n(reset_n),
-                                     .opa(opa),
-                                     .opb(opb),
+                                     .opa(opa[(ADDER_WIDTH - 1) : 0]),
+                                     .opb(opb[(ADDER_WIDTH - 1) : 0]),
                                      .dout(rosc_dout[i])
                                     );
       end
